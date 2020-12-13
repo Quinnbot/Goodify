@@ -1,6 +1,6 @@
 window.onSpotifyWebPlaybackSDKReady = () => {
 
-    const token = 'BQDwPBqQS-Ajy6-AM8k6rHuijDCw1aq3ChMzqvwPCelkcidovwf0EB2OnHPtcVtxi6ogx6s7LZoqcdl1t4mN3wHGH4Qfs0RP7wB2uOhWZNk0O_mxX2KJUadx9qZz1BedXErIeU_XaJYWLpNMlqbGSppgT7fd5Yun5l0H';
+    const token = '';
 
     const player = new Spotify.Player({
 
