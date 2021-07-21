@@ -1,21 +1,108 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
   <title>Goodify</title>
+  <meta charset="utf-8">
+
+  <style>
+
+  .grid-container {
+      color: white;
+      display: grid;
+      grid-template-areas:
+        'menu header header header header header'
+        'menu main main main main main'
+        'footer footer footer footer footer footer-n';
+      grid-gap: 5px;
+      background-color: #703b6a;
+      padding: 5px;
+      height: 96vh;
+      width: 98vw;
+      justify-self: stretch;
+
+    }
+
+    .grid-container>div {
+      background-color: rgb(37, 37, 44);
+      padding: 1px 1px;
+      align-self: auto;
+    }
+
+    .Header {
+      grid-area: header;
+    }
+
+    .Menu {
+      grid-area: menu;
+
+    }
+
+    .Main {
+      grid-area: main;
+      justify-items: stretch;
+    }
+
+    .Footer {
+      max-height: 100;
+      grid-area: footer;
+      min-height: 100px;
+    }
+
+    .Footer-n {
+      font-size: px;
+      grid-area: footer-n;
+      min-height: 100px;
+    }
+  </style>
 
 </head>
+
 <body>
 
   <script type="text/javascript" src="https://sdk.scdn.co/spotify-player.js"></script>
-  <script type="text/javascript" src="JavaScript/Main.js"></script>
   <script type="text/javascript" src="JavaScript/device.js"></script>
+  <script type="text/javascript" src="https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js"></script>
+
+  <div class="grid-container">
+
+    <div class="Header">
+      <p>fuk</p>
+    </div>
+
+    <div class="Main">
+      <canvas class="glslCanvas" data-fragment-url="shaders/shader.frag" width="1000" height="600"></canvas>
+    </div>
+
+    <div class="Menu">
+      <p>fuk</p>
+    </div>
+
+    <div class="Footer">
+
+      <div>
+        <img id="playing_art" src="pictures\default_cover.jpg" alt="pictures\default_cover.jpg" width="100" height="100">
+        <img id="play_pause" src="pictures\play.png" width="100" height="100">
+        <p id="playing_name">not playing anything rn</p>
+        
+        </img>
+      </div>
+
+    </div>
+
+    <div class="Footer-n">
+      
+        <div id="up_next">
+          <p text-size: 10>Up next:</p> <br>
+          <img id="playing_art" src="pictures\default_cover.jpg" alt="pictures\default_cover.jpg">
+        </div>
+      
+    </div>
+
+  </div>
+
 
 </body>
-<article>
 
-  <img id="playing_art" src="pictures\default_cover.jpg" alt="pictures\default_cover.jpg"><br>
-  <h1 id=playing_name>not playing anything rn</h1>
-
-</article>
 </html>

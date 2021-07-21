@@ -1,0 +1,46 @@
+.grid-container {
+  display: grid;
+  grid-template-areas:
+    'menu header header header header header'
+    'menu main main main main main'
+    'footer footer footer footer footer footer-n';
+  grid-gap: 5px;
+  background-color: #703b6a;
+  padding: 5px;
+  height: 96vh;
+  width: 98vw;
+  justify-self: stretch;
+
+}
+
+.grid-container>div {
+  background-color: rgb(37, 37, 44);
+  padding: 1px 1px;
+  align-self: auto;
+}
+
+.Header {
+  grid-area: header;
+}
+
+.Menu {
+  grid-area: menu;
+
+}
+
+.Main {
+  grid-area: main;
+  justify-self: stretch;
+}
+
+.Footer {
+  max-height: 100;
+  grid-area: footer;
+  min-height: 100px;
+}
+
+.Footer-n {
+  font-size: px;
+  grid-area: footer-n;
+  min-height: 100px;
+}

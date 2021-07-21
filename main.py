@@ -1,32 +1,53 @@
 from flask import Flask, render_template, send_file, redirect, request
-import subprocess, pickle, requests, base64, json
+from flask_restful import Api, Resource
+import subprocess, pickle, requests, base64, spotipy, json, random
+from spotipy import util
+from selenium import webdriver
 import userData
 
+from API import Resources
+
 app = Flask(__name__)
-client_id = 'd9f97736297e4a039202cb31e162c0ef'
-client_secret = '50575c7c28be4b03863f6781d0c5ad46'
+api = Api(app)
+
+api.add_resource(Resources, '/API/<string:command>')
+
+# sp = spotipy()
+
+# driver = webdriver.Firefox()
+
+client_id = 'not for u'
+client_secret = 'not for u'
 response_type = 'code'
 redirect_uri = 'http://localhost:5000/callback'
-scope = 'user-read-private%20user-read-email'
+scope = 'streaming,user-read-playback-state,user-modify-playback-state,user-read-recently-played,user-top-read,user-read-playback-position,playlist-modify-private'
 user_data = None
+sp = None
+Token = None
 browser = 'C:\\Program Files\\Mozilla Firefox\\firefox.exe'
 
 @app.route('/')
 def login():
 
-    try:
-        user_data = pickle.load(open('user_data.p', 'rb'))
-    except:
-        subprocess.run([
-            "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
-            f"https://accounts.spotify.com/authorize?client_id={client_id}&response_type={response_type}&redirect_uri={redirect_uri.replace('/', '%2F').replace(':', '%3A')}&scope={scope}"
-        ])
+    Token = util.prompt_for_user_token(
+            'Q',
+            scope,
+            client_id=client_id ,
+            client_secret=client_secret,
+            redirect_uri='https://www.google.com/'
+    )
+
+    sp = spotipy.Spotify(auth=Token)
 
     return redirect('/index.html')
 
 @app.route('/index.html')
 def index():
     return render_template('index.html')
+
+@app.route('/main.css')
+def css():
+    return send_file(f'templates/main.css', mimetype="text/stylesheet")
 
 @app.route('/JavaScript/<string:script>')
 def scripts(script):
@@ -35,6 +56,10 @@ def scripts(script):
 @app.route('/pictures/<string:picture>')
 def pictures(picture):
     return send_file(f'pictures/{picture}', mimetype='image/gif')
+
+@app.route('/shaders/<string:shader>')
+def shaders(shader):
+    return send_file(f'shaders/{shader}', mimetype='text/glslCanvas')
 
 @app.route('/callback')
 def callback():
@@ -77,10 +102,6 @@ def callback():
 print(__name__)
 if __name__ == '__main__':
 
-    #open the page in firefox
-    # subprocess.run([
-    #     browser,
-    #     "localhost:5000"
-    # ])
+    app.run(debug=False)
 
-    app.run(debug=True)
+    # driver.get('http://127.0.0.1:5000/')
