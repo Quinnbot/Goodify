@@ -1,26 +1,19 @@
-import time
-from flask_restful import Resource, Api, request
+from flask_restful import Resource, request
 from spotipy import util
-import pickle, spotipy, random, json, threading
+from Database import Database
+import pickle, spotipy, random, json
 
 
 class Resources(Resource):
 
     def __init__(self):
-        self.client_id = 'not for u'
-        self.client_secret = 'not for u'
         self.scope = 'streaming,user-read-playback-state,user-modify-playback-state,user-read-recently-played,user-top-read,user-read-playback-position,playlist-modify-private'
-        
         self.device_id = None
 
-        self.token = util.prompt_for_user_token(
-            'Q',
-            self.scope,
-            client_id=self.client_id ,
-            client_secret=self.client_secret,
-            redirect_uri='https://www.google.com/'
-        )
+        self.token = util.prompt_for_user_token('Q')
         self.sp = spotipy.Spotify(auth=self.token)
+
+        self.DB = Database(self.sp)
 
         self.top_artists = self.sp.current_user_top_artists()['items']
         self.top_tracks = self.sp.current_user_top_tracks()['items']
@@ -30,48 +23,47 @@ class Resources(Resource):
             self.rec = None
         
     def get(self, command):
-
-        if command == 'token':
+        
+        if command == 'playlists':
+            playlists = None
             try:
-                
-                
-                return {"token": self.token, "refresh": 'None'}
+                playlists = pickle.load(open('cache/playlists.p', 'rb+'))
             except:
+                with self.sp.current_user_playlists() as reply:
+                    print(reply)
+                    playlists = json.encoder(reply)
+                    pickle.dump(playlists, open('cache/playlists.p', 'wb+'))
+
+            return playlists
+
+        elif command == 'token':
+            try:
+                return {"token": self.token, "refresh": 'None'}
+            except: 
                 return {"token": "none", "refresh": "none"}
 
-        elif command == 'next':
-            pass
+        elif command == 'Search':
+            state = json.loads(request.data)
+            self.DB.Search(state['Query'], state['ReturnAmt'], state['Type'])
+            
 
         else:
             return {"command": "invalid"}
 
     def post(self, command):
-        print(threading.active_count())
 
-        if command == 'player_state' and threading.active_count() == 3:
-            state = json.loads(request.data)
-            percent = 1 - (state['position']/state['duration'])
+        state = json.loads(request.data)
 
-            print('\n{} rec: {} playing: {}\n'.format(percent, self.rec, state['track_window']['current_track']['uri']))
-            
-            if( self.rec == None ):
-                self.rec = self.recs(state)
-                self.sp.add_to_queue(self.rec, device_id=self.device_id)
+        if command == 'player_state':
+            self.DB.GetSpotifyHistory()
+            pickle.dump((state['track_window']['current_track']['uri'], state['position']), open('cache/last.p', 'wb+'))            
+        
+        elif command == 'auto-dj':
+            self.rec = self.recs()
+            self.sp.start_playback(device_id=self.device_id, uris=[self.rec])
+            return {"features": self.sp.audio_features(self.rec)}
 
-            if(percent == 1.0 and self.rec == state['track_window']['current_track']['uri']):
-                self.rec = 'temp'
-                self.rec = self.recs(state)
-                print('adding {} to queue'.format(self.rec))
-                self.sp.add_to_queue(self.rec, device_id=self.device_id)
-
-                if state['duration'] >= 30000:
-                    print('sleeping to check for a "listen"')
-                    time.sleep(30)
-                    temp_cp = self.sp.current_playback()
-                    print(temp_cp['item']['uri'])
-
-
-        if command == 'device_ready':
+        elif command == 'device_ready':
 
             self.device_id = str(request.get_data().decode())
 
@@ -81,11 +73,17 @@ class Resources(Resource):
                 if dev['name'] == 'Goodify':
                     self.device_id = dev['id']
             try:
-                self.sp.transfer_playback(self.device_id)
+
+                try:
+                    self.last = pickle.load(open('cache/last.p', 'rb+'))
+                    self.sp.start_playback(device_id=self.device_id, uris=[self.last[0]], position_ms=self.last[1])
+                except:
+                    self.rec = self.recs()
+                    self.sp.start_playback(device_id=self.device_id, uris=[self.rec])
             except: 
                 print('could not transerfer playback automaticly :/')
-
-    def recs(self, state):
+    
+    def recs(self):
         artists = []
         tracks = []
         formula = ''
@@ -96,13 +94,9 @@ class Resources(Resource):
             tint = random.randint(0, len(self.top_tracks)-1)
             tracks.append(self.top_tracks[tint]['uri'])
             formula += self.top_tracks[tint]['name']+' + '
-        
-        tracks.append(state['track_window']['current_track']['uri'])
-        artists.append(state['track_window']['current_track']['artists'][0]['uri'])
 
         recomends = self.sp.recommendations(seed_tracks=tracks, limit=100)['tracks'].pop(random.randint(0, 99))
 
         formula += ' = '+recomends['name']
-        print(formula)
         pickle.dump(recomends['uri'], open('cache/rec.p', 'wb+'))
         return recomends['uri']

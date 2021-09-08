@@ -1,21 +1,11 @@
 
-    
-
-async function request(url, meth){
-
-  var rj = await fetch(url, {method:meth}).then(response => response.json());
-  return rj
-  
-}
-// var tokens = request('/API/token', 'GET');
-// console.log(tokens);
-
 window.onSpotifyWebPlaybackSDKReady = () => {
-  
+  // document.getElementById("Menu").innerHTML = 
+
   const player = new Spotify.Player({
     name: 'Goodify',
     getOAuthToken: cb => { 
-
+ 
       fetch('/API/token')
       .then(response => response.json())
       .then(data => cb(data['token']));
@@ -44,16 +34,20 @@ window.onSpotifyWebPlaybackSDKReady = () => {
     else { document.getElementById('play_pause').src='pictures\\pause.png' }
 
 
+
     var upnext = 'Up Next:';
 
     for (let track of state['track_window']['next_tracks']){
-      // upnext += '<div><img id=play_pause src="'+track['album']['images'][2]['url']+'"width="250" height="250"><br>'+ track['name'] + ' - '+ track['artists'][0]['name']+'</div>'
       upnext += '<p>'+ track['name'] + ' - '+ track['artists'][0]['name']+'</p>'
     }
 
-    document.getElementById("up_next").innerHTML = upnext;
-
-    console.log(state['context'])
+    console.log(state)
+    if (state['paused'] && state['position'] == 0 && !state['loading']){
+      fetch("/API/auto-dj", {
+        method: "POST",
+        body: JSON.stringify(state)
+      });
+    }
 
     fetch("/API/player_state", {
       method: "POST", 
@@ -66,6 +60,8 @@ window.onSpotifyWebPlaybackSDKReady = () => {
   // Ready
   player.addListener('ready', ({ device_id }) => {
     console.log('Ready with Device ID', device_id);
+
+    player.setVolume(0.5)
 
     fetch("/API/device_ready", {
       method: "POST", 
@@ -80,4 +76,21 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 
   // Connect to the player!
   player.connect();
+
+  fetch('/API/playlists')
+  .then(response => response.json())
+  .then(data => console.log(data));
+
+  //play / pause button
+  
+  var PlayPause = document.getElementById("play_pause");
+  PlayPause.onclick = function() {
+    player.togglePlay();
+  }
+
+  var slider = document.getElementById("vol_control");
+  slider.oninput = function() {
+    player.setVolume(this.value);
+  }
+
 };
